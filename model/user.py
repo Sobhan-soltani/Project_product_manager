@@ -8,3 +8,6 @@ class User:
         self.phone_number = phone_number
         self.username = username
         self.password = password
+
+    def __repr__(self):
+        return f"{self.__dict__}"
