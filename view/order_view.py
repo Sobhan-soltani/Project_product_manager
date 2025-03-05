@@ -132,4 +132,3 @@ class Ui_Dialog(QWidget):
         self.label_6.setText(QCoreApplication.translate("Dialog", u"price", None))
         self.pushButton_2.setText(QCoreApplication.translate("Dialog", u"back", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"cancel", None))
-        self.show()
