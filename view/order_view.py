@@ -1,15 +1,4 @@
 #alifarazi
-from PyQt5.QtWidgets import QWidget
-
-# -*- coding: utf-8 -*-
-
-################################################################################
-## Form generated from reading UI file 'designerGgSyZo.ui'
-##
-## Created by: Qt User Interface Compiler version 6.8.2
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
@@ -132,3 +121,4 @@ class Ui_Dialog(QWidget):
         self.label_6.setText(QCoreApplication.translate("Dialog", u"price", None))
         self.pushButton_2.setText(QCoreApplication.translate("Dialog", u"back", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"cancel", None))
+#
