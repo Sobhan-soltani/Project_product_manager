@@ -1,7 +1,7 @@
 # view/login_signup_view.py
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                               QTabWidget, QLineEdit, QPushButton, QMessageBox, QDateEdit)
-from validation.validator import is_valid_username, is_valid_password
+from validation.validator import is_valid_username  #is_valid_password
 from view.panel_view import PanelView
 
 class LoginSignupView(QMainWindow):
@@ -111,9 +111,9 @@ class LoginSignupView(QMainWindow):
             QMessageBox.warning(self, "Error", "Username must be 3-20 alphanumeric characters")
             return
 
-        if not is_valid_password(password):
-            QMessageBox.warning(self, "Error", "Password must be 8+ characters with upper, lower, and digits")
-            return
+        # if not is_valid_password(password):
+        #     QMessageBox.warning(self, "Error", "Password must be 8+ characters with upper, lower, and digits")
+        #     return
 
         try:
             self.auth_service.signup(name, family, birthdate, national_code, phone_number, username, password)
