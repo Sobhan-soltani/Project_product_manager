@@ -1,4 +1,6 @@
 class Payment:
+    PAYMENT_STATUS_PAID = None
+
     def __init__(self, payment_type, amount, date_time, description):
         self.payment_type = payment_type
         self.amount = amount

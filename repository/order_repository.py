@@ -2,25 +2,28 @@ import mysql.connector
 from datetime import datetime
 import json
 from model import Order
-from validation.payment_status import *
+from model.payment import Payment
 
 
-def check_payment_status(self):
-    pass
+def check_payment_status(payment):
+    if payment.payment_status == Payment.PAYMENT_STATUS_PAID:
+        return True
+    else:
+        return False
 
 
 
 
 def add_payment_to_db(user, order_item_list=None):
-    # بررسی وضعیت پرداخت
-    if not check_payment_status():
-        return False, "پرداخت ناموفق"
 
-    # زمان کنونی
+    if not check_payment_status():
+        return False, "payment failed"
+
+    #
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        # اتصال به دیتابیس MySQL
+        #MySQL
         conn = mysql.connector.connect(
             host="localhost",       # آدرس سرور MySQL
             user="root",            # نام کاربری
@@ -29,7 +32,6 @@ def add_payment_to_db(user, order_item_list=None):
         )
         cursor = conn.cursor()
 
-        # ایجاد جدول اگر وجود نداشته باشد
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS payments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
