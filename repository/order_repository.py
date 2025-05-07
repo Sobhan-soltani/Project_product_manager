@@ -1,59 +1,56 @@
-import mysql.connector
+# repository/order_repository.py
 from datetime import datetime
-import json
-from model import Order
+from model.order import Order
 from model.payment import Payment
+from model.order_item import OrderItem
 
+class OrderRepository:
+    def __init__(self, conn):
+        self.conn = conn
+        self.cursor = conn.cursor()
 
-def check_payment_status(payment):
-    if payment.payment_status == Payment.PAYMENT_STATUS_PAID:
-        return True
-    else:
-        return False
+    def save_order(self, order):
+        # Save the order
+        self.cursor.execute('''
+            INSERT INTO orders (user_id, date_time, total_cost)
+            VALUES (?, ?, ?)
+        ''', (order.user.id, order.date_time, order.total_cost))
+        self.conn.commit()
+        order.id = self.cursor.lastrowid
 
+        # Save order items
+        for item in order.order_item_list:
+            self.cursor.execute('''
+                INSERT INTO order_items (order_id, product_id, quantity, price)
+                VALUES (?, ?, ?, ?)
+            ''', (order.id, item.product.product_id, item.quantity, item.price))
+            self.conn.commit()
+            item.id = self.cursor.lastrowid
+            item.order = order
 
+        # Save payments
+        for payment in order.payment_list:
+            self.cursor.execute('''
+                INSERT INTO payments (order_id, payment_type, amount, date_time, description, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (order.id, payment.payment_type, payment.amount, payment.date_time, payment.description, payment.status))
+            self.conn.commit()
+            payment.order = order
 
+        return order.id
 
-def add_payment_to_db(user, order_item_list=None):
+    def check_payment_status(self, payment):
+        return payment.status == Payment.PAYMENT_STATUS_PAID
 
-    if not check_payment_status():
-        return False, "payment failed"
+    def add_payment_to_order(self, order, payment):
+        if not self.check_payment_status(payment):
+            return False, "Payment failed: Status is not PAID"
 
-    #
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-        #MySQL
-        conn = mysql.connector.connect(
-            host="localhost",       # آدرس سرور MySQL
-            user="root",            # نام کاربری
-            password="yourpassword",# رمز عبور
-            database="yourdatabase" # نام دیتابیس
-        )
-        cursor = conn.cursor()
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS payments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user VARCHAR(255) NOT NULL,
-                date_time DATETIME NOT NULL,
-                order_item_list JSON
-            )
-        ''')
-
-
-        order_json = json.dumps(order_item_list) if order_item_list else None
-
-
-        cursor.execute('''
-            INSERT INTO payments (user, date_time, order_item_list)
-            VALUES (%s, %s, %s)
-        ''', (user, current_time, order_json))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True, "Payment was added"
-
-    except mysql.connector.Error as err:
-        return False, f"ERROR in Data Base: {err}"
+        payment.date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        order.add_payment(payment)
+        self.cursor.execute('''
+            INSERT INTO payments (order_id, payment_type, amount, date_time, description, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (order.id, payment.payment_type, payment.amount, payment.date_time, payment.description, payment.status))
+        self.conn.commit()
+        return True, "Payment added successfully"

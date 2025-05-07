@@ -1,8 +1,7 @@
-# view/product_list_view.py
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QListWidget, QLineEdit, QPushButton, QMessageBox,
-                               QDateEdit, QSpinBox, QComboBox, QListWidgetItem)
-from PySide6.QtGui import QFont, QColor
+                               QDateEdit, QSpinBox, QComboBox, QListWidgetItem, QLabel)
+from PySide6.QtGui import QFont
 from PySide6.QtCore import QDate, Qt, QSize
 from repository.product_repository import ProductRepository
 from service.product_service import ProductService
@@ -11,49 +10,50 @@ class ProductListView(QMainWindow):
     def __init__(self, user_id, user_repository, panel_view):
         super().__init__()
         self.user_id = user_id
+        self.user_repository = user_repository
         self.product_repository = ProductRepository(user_repository.conn)
-        self.product_service = ProductService(self.product_repository)
+        self.product_service = ProductService(self.product_repository, self.user_repository)
         self.panel_view = panel_view
         self.setWindowTitle("Product List")
-        self.setGeometry(100, 100, 800, 500)  # Increased window size
+        self.setGeometry(100, 100, 800, 500)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.layout = QHBoxLayout(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
 
-        # Product List Display
+        # Add header widget separately
+        self.header_widget = QWidget()
+        self.layout.addWidget(self.header_widget)
+
         self.product_list = QListWidget()
+        self.product_list.setSelectionMode(QListWidget.SingleSelection)
+        self.product_list.itemClicked.connect(self.on_product_selected)
         self.product_list.setFont(QFont("Courier New", 10))
         self.product_list.setStyleSheet("""
             QListWidget {
-                background-color: #f5f5f5;
+                background-color: #2e2e2e;
                 border-radius: 5px;
                 padding: 5px;
+                color: white;
             }
             QListWidget::item {
-                border-bottom: 1px solid #cccccc;
+                border-bottom: 1px solid #555555;
                 padding: 8px;
-                background-color: white;
+                background-color: #3a3a3a;
                 margin: 2px;
                 border-radius: 3px;
+                color: white;
             }
             QListWidget::item:selected {
-                background-color: #e0f0ff;
+                background-color: #4a90e2;
                 border: 1px solid #a0a0a0;
+                color: white;
             }
         """)
         self.product_list.setMinimumWidth(500)
-        self.product_list.itemClicked.connect(self.load_products)
         self.layout.addWidget(self.product_list)
 
-        # Add header
-        self.add_list_header()
-        # Add header
-        header_item = QListWidgetItem("Name".ljust(15) + "Company".ljust(15) + "Price".ljust(10) + "Quantity")
-        header_item.setFlags(header_item.flags() & ~Qt.ItemIsSelectable)  # Make header non-selectable
-        self.product_list.addItem(header_item)
-
-        # Form for Adding/Editing Products
+        # Form layout for product details
         self.form_layout = QVBoxLayout()
 
         self.category_input = QComboBox()
@@ -98,44 +98,37 @@ class ProductListView(QMainWindow):
         self.form_layout.addWidget(self.back_button)
 
         self.layout.addLayout(self.form_layout)
+
+        # Load header and products
+        self.add_list_header()
         self.load_products()
 
     def add_list_header(self):
-        # Header widget with custom styling
-        header_widget = QWidget()
-        header_widget.setStyleSheet("""
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            padding: 5px;
-        """)
-        header_layout = QHBoxLayout(header_widget)
+        header_layout = QHBoxLayout(self.header_widget)
 
-        labels = ["Name", "Company", "Price", "Quantity"]
-        widths = [150, 150, 100, 80]  # Adjusted widths
+        labels = ["Product Name", "Company Name", "Price", "Quantity"]
+        widths = [150, 150, 100, 80]
 
         for label, width in zip(labels, widths):
-            lbl = QLineEdit(label)
-            lbl.setReadOnly(True)
+            lbl = QLabel(label)
             lbl.setStyleSheet("""
-                QLineEdit {
-                    border: none;
-                    background: transparent;
+                QLabel {
                     font-weight: bold;
                     font-size: 12px;
+                    color: white;
                 }
             """)
             lbl.setMinimumWidth(width)
             header_layout.addWidget(lbl)
 
-        header_item = QListWidgetItem()
-        header_item.setSizeHint(header_widget.sizeHint())
-        header_item.setFlags(Qt.NoItemFlags)
-        self.product_list.addItem(header_item)
-        self.product_list.setItemWidget(header_item, header_widget)
+        self.header_widget.setStyleSheet("""
+            background-color: #4a4a4a;
+            border-radius: 3px;
+            padding: 5px;
+        """)
 
-    def load_products(self):
+    def load_products(self, item=None):
         self.product_list.clear()
-        self.add_list_header()  # Add header first
 
         products = self.product_service.get_user_products(self.user_id)
         for product in products:
@@ -143,7 +136,6 @@ class ProductListView(QMainWindow):
             item_layout = QHBoxLayout(item_widget)
             item_layout.setContentsMargins(5, 5, 5, 5)
 
-            # Create styled fields
             fields = [
                 (product.name, 150),
                 (product.company_name, 150),
@@ -159,14 +151,53 @@ class ProductListView(QMainWindow):
                         border: none;
                         background: transparent;
                         font-size: 12px;
+                        color: white;
                     }
                 """)
                 lbl.setMinimumWidth(width)
                 item_layout.addWidget(lbl)
 
-            # Create list item
             list_item = QListWidgetItem()
-            list_item.setSizeHint(QSize(0, 40))  # Fixed height
+            list_item.setSizeHint(QSize(0, 40))
+            list_item.setData(Qt.UserRole, product.product_id)
+            self.product_list.addItem(list_item)
+            self.product_list.setItemWidget(list_item, item_widget)
+
+    # Other methods remain the same...
+    def load_products(self, item=None):
+        self.product_list.clear()
+        self.add_list_header()
+
+        products = self.product_service.get_user_products(self.user_id)
+        for product in products:
+            item_widget = QWidget()
+            item_layout = QHBoxLayout(item_widget)
+            item_layout.setContentsMargins(5, 5, 5, 5)
+
+            fields = [
+                (product.name, 150),
+                (product.company_name, 150),
+                (f"${product.price:.2f}", 100),
+                (str(product.quantity), 80)
+            ]
+
+            for text, width in fields:
+                lbl = QLineEdit(text)
+                lbl.setReadOnly(True)
+                lbl.setStyleSheet("""
+                    QLineEdit {
+                        border: none;
+                        background: transparent;
+                        font-size: 12px;
+                        color: white;  /* White text for items */
+                    }
+                """)
+                lbl.setMinimumWidth(width)
+                item_layout.addWidget(lbl)
+
+            list_item = QListWidgetItem()
+            list_item.setSizeHint(QSize(0, 40))
+            list_item.setData(Qt.UserRole, product.product_id)  # Store product ID
             self.product_list.addItem(list_item)
             self.product_list.setItemWidget(list_item, item_widget)
 
@@ -188,52 +219,63 @@ class ProductListView(QMainWindow):
             QMessageBox.warning(self, "Error", "Price must be a number")
             return
 
-        self.product_service.add_product(category, name, company_name, price, quantity, exp_date, self.user_id)
-        self.load_products()
-        self.clear_form()
+        try:
+            self.product_service.add_product(category, name, company_name, price, quantity, exp_date, self.user_id)
+            self.load_products()
+            self.clear_form()
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", str(e))
 
     def edit_product(self):
         selected_item = self.product_list.currentItem()
         if not selected_item:
             QMessageBox.warning(self, "Error", "Select a product to edit")
             return
-        product_name = selected_item.text().split(" - ")[0]
-        products = self.product_service.get_user_products(self.user_id)
-        product = next((p for p in products if p.name == product_name), None)
-        if product:
-            category = self.category_input.currentText()
-            name = self.name_input.text()
-            company_name = self.company_name_input.text()
-            price = self.price_input.text()
-            quantity = self.quantity_input.value()
-            exp_date = self.exp_date_input.date().toString("yyyy-MM-dd")
+        product_id = selected_item.data(Qt.UserRole)
+        if not product_id:
+            QMessageBox.warning(self, "Error", "Invalid product selected")
+            return
 
-            if not category or not name or not company_name or not price or quantity <= 0:
-                QMessageBox.warning(self, "Error", "All fields except expiration date are required")
-                return
+        category = self.category_input.currentText()
+        name = self.name_input.text()
+        company_name = self.company_name_input.text()
+        price = self.price_input.text()
+        quantity = self.quantity_input.value()
+        exp_date = self.exp_date_input.date().toString("yyyy-MM-dd")
 
-            try:
-                price = float(price)
-            except ValueError:
-                QMessageBox.warning(self, "Error", "Price must be a number")
-                return
+        if not category or not name or not company_name or not price or quantity <= 0:
+            QMessageBox.warning(self, "Error", "All fields except expiration date are required")
+            return
 
-            self.product_service.update_product(product.id, category, name, company_name, price, quantity, exp_date)
+        try:
+            price = float(price)
+        except ValueError:
+            QMessageBox.warning(self, "Error", "Price must be a number")
+            return
+
+        try:
+            self.product_service.update_product(product_id, category, name, company_name, price, quantity, exp_date)
             self.load_products()
             self.clear_form()
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", str(e))
 
     def delete_product(self):
         selected_item = self.product_list.currentItem()
         if not selected_item:
             QMessageBox.warning(self, "Error", "Select a product to delete")
             return
-        product_name = selected_item.text().split(" - ")[0]
-        products = self.product_service.get_user_products(self.user_id)
-        product = next((p for p in products if p.name == product_name), None)
-        if product:
-            self.product_service.delete_product(product.id)
+        product_id = selected_item.data(Qt.UserRole)
+        if not product_id:
+            QMessageBox.warning(self, "Error", "Invalid product selected")
+            return
+
+        try:
+            self.product_service.delete_product(product_id)
             self.load_products()
             self.clear_form()
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", str(e))
 
     def clear_form(self):
         self.category_input.setCurrentIndex(0)
@@ -246,3 +288,24 @@ class ProductListView(QMainWindow):
     def go_back(self):
         self.panel_view.show()
         self.close()
+
+    def on_product_selected(self, item: QListWidgetItem):
+        """When the user clicks a row, load its values into the form."""
+        product_id = item.data(Qt.UserRole)
+        prod = self.product_repository.get_product_by_id(product_id)
+        if not prod:
+            return
+
+        # Populate category dropdown
+        idx = self.category_input.findText(prod.category)
+        self.category_input.setCurrentIndex(idx if idx >= 0 else 0)
+
+        # Populate text fields
+        self.name_input.setText(prod.name)
+        self.company_name_input.setText(prod.company_name)
+        self.price_input.setText(str(prod.price))
+        self.quantity_input.setValue(prod.quantity)
+
+        # Populate expiration date
+        date = QDate.fromString(prod.exp_date, "yyyy-MM-dd")
+        self.exp_date_input.setDate(date if date.isValid() else QDate.currentDate())

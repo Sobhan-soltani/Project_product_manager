@@ -1,123 +1,219 @@
-from PyQt5.QtWidgets import QWidget
+# view/order_view.py
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QHeaderView, QKeySequenceEdit,
-    QLabel, QPushButton, QSizePolicy, QTableWidget,
-    QTableWidgetItem, QWidget)
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout,
+    QListWidget, QListWidgetItem, QLabel,
+    QSpinBox, QPushButton, QMessageBox,
+    QWidget
+)
 
-# todo
-class Ui_Dialog(QWidget):
-    def setupUi(self, Dialog):
-        if not Dialog.objectName():
-            Dialog.setObjectName(u"Dialog")
-        Dialog.resize(654, 380)
-        self.pushButton = QPushButton(Dialog)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(550, 330, 91, 31))
-        self.tableWidget = QTableWidget(Dialog)
-        if (self.tableWidget.columnCount() < 5):
-            self.tableWidget.setColumnCount(5)
-        font = QFont()
-        font.setPointSize(9)
-        __qtablewidgetitem = QTableWidgetItem()
-        __qtablewidgetitem.setFont(font);
-        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        if (self.tableWidget.rowCount() < 3):
-            self.tableWidget.setRowCount(3)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(0, __qtablewidgetitem5)
-        __qtablewidgetitem6 = QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(1, __qtablewidgetitem6)
-        __qtablewidgetitem7 = QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(2, __qtablewidgetitem7)
-        self.tableWidget.setObjectName(u"tableWidget")
-        self.tableWidget.setGeometry(QRect(0, 0, 571, 192))
-        self.keySequenceEdit = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit.setObjectName(u"keySequenceEdit")
-        self.keySequenceEdit.setGeometry(QRect(90, 210, 113, 21))
-        self.label = QLabel(Dialog)
-        self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(10, 210, 81, 16))
-        self.label_2 = QLabel(Dialog)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(10, 250, 81, 16))
-        self.label_3 = QLabel(Dialog)
-        self.label_3.setObjectName(u"label_3")
-        self.label_3.setGeometry(QRect(220, 210, 81, 16))
-        self.label_4 = QLabel(Dialog)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setGeometry(QRect(220, 250, 81, 16))
-        self.label_5 = QLabel(Dialog)
-        self.label_5.setObjectName(u"label_5")
-        self.label_5.setGeometry(QRect(10, 290, 81, 16))
-        self.label_6 = QLabel(Dialog)
-        self.label_6.setObjectName(u"label_6")
-        self.label_6.setGeometry(QRect(10, 330, 81, 16))
-        self.keySequenceEdit_2 = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit_2.setObjectName(u"keySequenceEdit_2")
-        self.keySequenceEdit_2.setGeometry(QRect(90, 250, 113, 21))
-        self.keySequenceEdit_3 = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit_3.setObjectName(u"keySequenceEdit_3")
-        self.keySequenceEdit_3.setGeometry(QRect(300, 210, 113, 21))
-        self.keySequenceEdit_4 = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit_4.setObjectName(u"keySequenceEdit_4")
-        self.keySequenceEdit_4.setGeometry(QRect(300, 250, 113, 21))
-        self.keySequenceEdit_5 = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit_5.setObjectName(u"keySequenceEdit_5")
-        self.keySequenceEdit_5.setGeometry(QRect(90, 290, 113, 21))
-        self.keySequenceEdit_6 = QKeySequenceEdit(Dialog)
-        self.keySequenceEdit_6.setObjectName(u"keySequenceEdit_6")
-        self.keySequenceEdit_6.setGeometry(QRect(90, 330, 113, 21))
-        self.pushButton_2 = QPushButton(Dialog)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(450, 330, 91, 31))
-        self.pushButton_3 = QPushButton(Dialog)
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(350, 330, 91, 31))
+class OrderView(QDialog):
+    def __init__(self, user, order_service, product_service, panel_view):
+        super().__init__()
+        self.user = user
+        self.order_service = order_service
+        self.product_service = product_service
+        self.panel_view = panel_view
 
-        self.retranslateUi(Dialog)
+        self.setWindowTitle("Order View")
+        self.setGeometry(100, 100, 800, 600)
 
-        QMetaObject.connectSlotsByName(Dialog)
-    # setupUi
+        if not self.user:
+            QMessageBox.critical(self, "Error", "Not logged in – please login again.")
+            self.close()
+            return
 
-    def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.pushButton.setText(QCoreApplication.translate("Dialog", u"save", None))
-        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"order id", None));
-        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"order", None));
-        ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"product", None));
-        ___qtablewidgetitem3 = self.tableWidget.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"quantity", None));
-        ___qtablewidgetitem4 = self.tableWidget.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"price", None));
-        ___qtablewidgetitem5 = self.tableWidget.verticalHeaderItem(0)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"product 1", None));
-        ___qtablewidgetitem6 = self.tableWidget.verticalHeaderItem(1)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("Dialog", u"product 2", None));
-        ___qtablewidgetitem7 = self.tableWidget.verticalHeaderItem(2)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("Dialog", u"product 3", None));
-        self.label.setText(QCoreApplication.translate("Dialog", u"product name", None))
-        self.label_2.setText(QCoreApplication.translate("Dialog", u"order id", None))
-        self.label_3.setText(QCoreApplication.translate("Dialog", u"order", None))
-        self.label_4.setText(QCoreApplication.translate("Dialog", u"product", None))
-        self.label_5.setText(QCoreApplication.translate("Dialog", u"quantity", None))
-        self.label_6.setText(QCoreApplication.translate("Dialog", u"price", None))
-        self.pushButton_2.setText(QCoreApplication.translate("Dialog", u"back", None))
-        self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"cancel", None))
+        # ─── Main Layout ───────────────────────────────
+        outer = QHBoxLayout(self)
+
+        # ─── Left Column ───────────────────────────────
+        left_col = QVBoxLayout()
+
+        # Title
+        lbl_title = QLabel("Available Products:")
+        left_col.addWidget(lbl_title)
+
+        # Header (outside the list)
+        hdr = QWidget()
+        hdr.setStyleSheet("""
+            background-color: #4a4a4a;
+            border-radius: 3px;
+            padding: 5px;
+        """)
+        hdr_lay = QHBoxLayout(hdr)
+        hdr_lay.setContentsMargins(5,5,5,5)
+        for text, w in [("Name", 100), ("Company", 100), ("Price", 80), ("Stock", 80)]:
+            l = QLabel(text)
+            l.setStyleSheet("""
+                QLabel {
+                    font-weight: bold;
+                    font-size: 12px;
+                    color: white;
+                }
+            """)
+            l.setMinimumWidth(w)
+            hdr_lay.addWidget(l)
+        left_col.addWidget(hdr)
+
+        # The product list itself
+        self.product_list = QListWidget()
+        self.product_list.setStyleSheet("""
+            QListWidget {
+                background-color: #2e2e2e;
+                border-radius: 5px;
+                padding: 5px;
+                color: white;
+            }
+            QListWidget::item {
+                border-bottom: 1px solid #555555;
+                padding: 8px;
+                background-color: #3a3a3a;
+                margin: 2px;
+                border-radius: 3px;
+                color: white;
+            }
+            QListWidget::item:selected {
+                background-color: #4a90e2;
+                border: 1px solid #a0a0a0;
+                color: white;
+            }
+        """)
+        self.product_list.setMinimumWidth(400)
+        self.product_list.itemClicked.connect(self.select_product)
+        left_col.addWidget(self.product_list)
+
+        outer.addLayout(left_col)
+
+        # ─── Right Column ──────────────────────────────
+        right_col = QVBoxLayout()
+
+        # Past orders
+        self.order_list = QListWidget()
+        self.order_list.setStyleSheet("""
+            QListWidget {
+                background-color: #2e2e2e;
+                border-radius: 5px;
+                padding: 5px;
+                color: white;
+            }
+            QListWidget::item {
+                padding: 8px;
+                color: white;
+            }
+        """)
+        self.order_list.setMinimumHeight(300)
+        self.order_list.setMinimumWidth(350)
+        right_col.addWidget(self.order_list)
+
+        # Form for new order
+        form = QVBoxLayout()
+        self.sel_lbl    = QLabel("Selected Product: None")
+        self.price_lbl  = QLabel("Price: N/A")
+        form.addWidget(self.sel_lbl)
+        form.addWidget(self.price_lbl)
+
+        ql = QHBoxLayout()
+        ql.addWidget(QLabel("Quantity:"))
+        self.qty_spin = QSpinBox()
+        self.qty_spin.setRange(1, 10000)
+        ql.addWidget(self.qty_spin)
+        form.addLayout(ql)
+
+        # Order details after save
+        self.id_lbl    = QLabel("Order ID: N/A")
+        self.date_lbl  = QLabel("Date: N/A")
+        self.total_lbl = QLabel("Total Price: N/A")
+        for w in (self.id_lbl, self.date_lbl, self.total_lbl):
+            form.addWidget(w)
+
+        right_col.addLayout(form)
+
+        # Buttons
+        btns = QHBoxLayout()
+        self.save_btn   = QPushButton("Save")
+        self.cancel_btn = QPushButton("Cancel")
+        self.back_btn   = QPushButton("Back")
+        self.save_btn.clicked.connect(self.save_order)
+        self.cancel_btn.clicked.connect(self.cancel)
+        self.back_btn.clicked.connect(self.go_back)
+        for b in (self.save_btn, self.cancel_btn, self.back_btn):
+            btns.addWidget(b)
+        right_col.addLayout(btns)
+
+        outer.addLayout(right_col)
+
+        # State
+        self.selected_product = None
+
+        # Load data
+        self.load_products()
+        self.load_orders()
+
+    def load_products(self):
+        """Just repopulate the list—header lives above."""
+        self.product_list.clear()
+        for p in self.product_service.get_user_products(self.user.id):
+            row = QWidget()
+            lay = QHBoxLayout(row)
+            lay.setContentsMargins(5,5,5,5)
+            for text, w in [
+                (p.name, 100),
+                (p.company_name, 100),
+                (f"${p.price:.2f}", 80),
+                (str(p.quantity), 80)
+            ]:
+                lbl = QLabel(text)
+                lbl.setStyleSheet("""
+                    QLabel { font-size: 12px; color: white; }
+                """)
+                lbl.setMinimumWidth(w)
+                lay.addWidget(lbl)
+
+            item = QListWidgetItem()
+            item.setSizeHint(row.sizeHint())
+            item.setData(Qt.UserRole, p)
+            self.product_list.addItem(item)
+            self.product_list.setItemWidget(item, row)
+
+    def select_product(self, item):
+        p = item.data(Qt.UserRole)
+        self.selected_product = p
+        self.sel_lbl.setText(f"Selected Product: {p.name}")
+        self.price_lbl.setText(f"Price: ${p.price:.2f}")
+
+    def load_orders(self):
+        self.order_list.clear()
+        for o in self.order_service.get_user_orders(self.user.id):
+            for oi in o.order_item_list:
+                txt = (f"Order #{o.id}  {o.date_time}  "
+                       f"{oi.product.name} x{oi.quantity} → "
+                       f"${oi.price * oi.quantity:.2f}")
+                self.order_list.addItem(txt)
+
+    def save_order(self):
+        if not self.selected_product:
+            return QMessageBox.warning(self, "Error", "Please select a product.")
+        try:
+            order, total = self.order_service.create_order(
+                self.user, self.selected_product.product_id, self.qty_spin.value()
+            )
+            self.id_lbl.setText(f"Order ID: {order.id}")
+            self.date_lbl.setText(f"Date: {order.date_time}")
+            self.total_lbl.setText(f"Total Price: ${total:.2f}")
+            QTimer.singleShot(100, lambda: (self.load_orders(), self.load_products()))
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", str(e))
+
+    def cancel(self):
+        self.selected_product = None
+        self.sel_lbl.setText("Selected Product: None")
+        self.price_lbl.setText("Price: N/A")
+        self.qty_spin.setValue(1)
+        self.id_lbl.setText("Order ID: N/A")
+        self.date_lbl.setText("Date: N/A")
+        self.total_lbl.setText("Total Price: N/A")
+
+    def go_back(self):
+        self.panel_view.show()
+        self.close()

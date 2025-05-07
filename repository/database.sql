@@ -1,4 +1,5 @@
-
+# File no longer needed - using SQLite with table creation in user_repository.py
+"""
 CREATE TABLE IF NOT EXISTS users
 (
     id            INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -28,3 +29,4 @@ CREATE TABLE IF NOT EXISTS products
 
 #     user_id      INTEGER,
 #     FOREIGN KEY (user_id) REFERENCES users (id)
+"""

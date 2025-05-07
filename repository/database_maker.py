@@ -1,3 +1,5 @@
+# File no longer needed - using SQLite with table creation in user_repository.py
+"""
 import mysql.connector
 
 def create_database():
@@ -16,3 +18,4 @@ def create_database():
         connection.commit()
     cursor.close()
     connection.close()
+"""
