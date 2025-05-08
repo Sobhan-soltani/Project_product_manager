@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (
     QSpinBox, QPushButton, QMessageBox,
     QWidget
 )
+from PySide6.QtGui import QPixmap  # برای نمایش تصویر
+
 
 class OrderView(QDialog):
     def __init__(self, user, order_service, product_service, panel_view):
@@ -83,10 +85,38 @@ class OrderView(QDialog):
         self.product_list.itemClicked.connect(self.select_product)
         left_col.addWidget(self.product_list)
 
+        # Empty label for when no products are available
+        self.empty_label = QLabel("No products available.")
+        self.empty_label.setAlignment(Qt.AlignCenter)
+        self.empty_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 14px;
+                padding: 20px;
+            }
+        """)
+        self.empty_label.hide()
+        left_col.addWidget(self.empty_label)
+
         outer.addLayout(left_col)
 
         # ─── Right Column ──────────────────────────────
         right_col = QVBoxLayout()
+
+        # Image Label
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setStyleSheet("""
+            QLabel {
+                background-color: #3a3a3a;
+                border-radius: 5px;
+                padding: 20px;
+                font-size: 24px;
+                color: white;
+            }
+        """)
+        self.image_label.setText("Image")
+        right_col.addWidget(self.image_label)
 
         # Past orders
         self.order_list = QListWidget()
@@ -110,8 +140,10 @@ class OrderView(QDialog):
         form = QVBoxLayout()
         self.sel_lbl    = QLabel("Selected Product: None")
         self.price_lbl  = QLabel("Price: N/A")
+        self.stock_lbl  = QLabel("Stock: N/A")  # New field for stock
         form.addWidget(self.sel_lbl)
         form.addWidget(self.price_lbl)
+        form.addWidget(self.stock_lbl)
 
         ql = QHBoxLayout()
         ql.addWidget(QLabel("Quantity:"))
@@ -153,7 +185,14 @@ class OrderView(QDialog):
     def load_products(self):
         """Just repopulate the list—header lives above."""
         self.product_list.clear()
-        for p in self.product_service.get_user_products(self.user.id):
+        products = self.product_service.get_user_products(self.user.id)
+
+
+
+        self.empty_label.hide()
+        self.product_list.show()
+
+        for p in products:
             row = QWidget()
             lay = QHBoxLayout(row)
             lay.setContentsMargins(5,5,5,5)
@@ -179,8 +218,21 @@ class OrderView(QDialog):
     def select_product(self, item):
         p = item.data(Qt.UserRole)
         self.selected_product = p
+
+        # Hide product list and show image + info
+        self.product_list.hide()
+        self.empty_label.hide()
+
         self.sel_lbl.setText(f"Selected Product: {p.name}")
         self.price_lbl.setText(f"Price: ${p.price:.2f}")
+        self.stock_lbl.setText(f"Stock: {p.quantity}")
+
+        # Show image if available
+        if hasattr(p, 'image_path') and p.image_path:
+            pixmap = QPixmap(p.image_path).scaled(200, 200, Qt.KeepAspectRatio)
+            self.image_label.setPixmap(pixmap)
+        else:
+            self.image_label.setText("Image")
 
     def load_orders(self):
         self.order_list.clear()
@@ -206,13 +258,17 @@ class OrderView(QDialog):
             QMessageBox.warning(self, "Error", str(e))
 
     def cancel(self):
+        # Clear selection and show product list again
         self.selected_product = None
         self.sel_lbl.setText("Selected Product: None")
         self.price_lbl.setText("Price: N/A")
+        self.stock_lbl.setText("Stock: N/A")
         self.qty_spin.setValue(1)
         self.id_lbl.setText("Order ID: N/A")
         self.date_lbl.setText("Date: N/A")
         self.total_lbl.setText("Total Price: N/A")
+        self.image_label.setText("Image")
+        self.product_list.show()
 
     def go_back(self):
         self.panel_view.show()
